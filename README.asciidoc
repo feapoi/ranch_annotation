@@ -1,38 +1,14 @@
-= Ranch
+= ranch工作流程
+1.启动ranch
+ranch_sup ->ranch_server
+ranch_server用来存储配置以及相关参数
 
-Ranch is a socket acceptor pool for TCP protocols.
+2.ranch:start_listener
+在ranch_sup下创建ranch_listener_sup子进程，一个监听端口对应一个ranch_listener_sup
 
-== Goals
+3.ranch_listener_sup
+ranch_listener_sup下又创建子进程ranch_conns_sup和ranch_acceptors_sup,
+ranch_acceptors_sup用来管理accpet进程池，
+ranch_conns_sup用来管理已经连接成功的网络进程
 
-Ranch aims to provide everything you need to accept TCP connections with
-a *small* code base and *low latency* while being easy to use directly
-as an application or to *embed* into your own.
-
-Ranch provides a *modular* design, letting you choose which transport
-and protocol are going to be used for a particular listener. Listeners
-accept and manage connections on one port, and include facilities to
-limit the number of *concurrent* connections. Connections are sorted
-into *pools*, each pool having a different configurable limit.
-
-Ranch also allows you to *upgrade* the acceptor pool without having
-to close any of the currently opened sockets.
-
-== Online documentation
-
-* https://ninenines.eu/docs/en/ranch/1.7/guide[User guide]
-* https://ninenines.eu/docs/en/ranch/1.7/manual[Function reference]
-
-== Offline documentation
-
-* While still online, run `make docs`
-* User guide available in `doc/` in PDF and HTML formats
-* Function reference man pages available in `doc/man3/` and `doc/man7/`
-* Run `make install-docs` to install man pages on your system
-* Full documentation in Asciidoc available in `doc/src/`
-* Examples available in `examples/`
-
-== Getting help
-
-* Official IRC Channel: #ninenines on irc.freenode.net
-* https://github.com/ninenines/ranch/issues[Issues tracker]
-* https://ninenines.eu/services[Commercial Support]
+4.当外部连接ranch应用的监听端口时，ranch_acceptor接收外部连接，此时进入ranch_acceptor循环，在此循环中调用start_protocol函数向ranch_conns_sup发送start_protocol消息，进入ranch_conns_sup循环，在ranch_conns_sup循环中，启动Protocol:start_link创建业务进程。并把Socket的控制权给此进程，然后比较当前外部连接数和maxConns的大小，若当前连接数小于maxConns的数不成立，此acceptor进入休眠状态。当有连接进程退出时，就会减少当前连接数，从而唤起睡眠的acceptor进程。
