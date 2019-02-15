@@ -1,7 +1,9 @@
-= ranch代码注解
+ranch代码注解
+=====  
 - 原项目地址：https://github.com/ninenines/ranch
 
-= ranch工作流程
+ranch工作流程
+=====  
 1.启动ranch
 ranch_sup ->ranch_server
 ranch_server用来存储配置以及相关参数
